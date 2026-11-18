@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUO QIANYI | Spazio d'Arte Digitale Personale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            background-color: #020817;
+            color: #ffffff;
+            overflow-x: hidden;
+            overflow-y: auto; 
+        }
+
+        /* 🌊 纵向长图背景：铺满屏幕宽度，高度自适应 */
+        .long-image-container {
+            position: relative;
+            width: 100vw;
+            display: block;
+            line-height: 0;
+        }
+
+        .long-image-container img {
+            width: 100vw;
+            height: auto;
+            display: block;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* 💦 超大范围水波纹与鱼群物理特效 Canvas 层 */
+        #ripple-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: auto;
+            z-index: 50;
+        }
+
+        /* ⚡ 左上角浮现的作品菜单 */
+        .floating-menu {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .menu-title {
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: #7df9ff;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(125, 249, 255, 0.5);
+        }
+
+        .menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 10px;
+            border-left: 2px solid rgba(125, 249, 255, 0.3);
+        }
+
+        .menu-btn {
+            background: rgba(10, 25, 50, 0.85);
+            border: 1px solid rgba(125, 249, 255, 0.4);
+            color: #e0f7fa;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13.5px;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .menu-btn:hover {
+            background: rgba(125, 249, 255, 0.25);
+            border-color: #7df9ff;
+            transform: translateX(6px);
+            box-shadow: 0 0 20px rgba(125, 249, 255, 0.6);
+        }
+
+        /* 🎨 作品展示专区 */
+        .works-showcase {
+            position: absolute;
+            top: 25vh;
+            left: 5vw;
+            right: 5vw;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            z-index: 100;
+        }
+
+        .work-card {
+            background: rgba(10, 18, 35, 0.85);
+            border: 1px solid rgba(125, 249, 255, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            text-decoration: none;
+            display: block;
+        }
+
+        .work-card:hover {
+            transform: translateY(-8px);
+            border-color: #7df9ff;
+            box-shadow: 0 0 30px rgba(125, 249, 255, 0.5);
+        }
+
+        .work-img-box {
+            width: 100%;
+            height: 200px;
+            background: #020817;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7df9ff;
+            border-bottom: 1px solid rgba(125, 249, 255, 0.2);
+        }
+
+        .work-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .work-card:hover .work-img-box img {
+            transform: scale(1.05);
+        }
+
+        .work-info {
+            padding: 20px;
+        }
+
+        .work-info h3 {
+            color: #7df9ff;
+            font-size: 16px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .work-info p {
+            color: #cbd5e1;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* 📄 PDF 作品介绍预览弹窗样式 */
+        .pdf-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(2, 8, 23, 0.92);
+            backdrop-filter: blur(15px);
+            z-index: 5000;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .pdf-modal-content {
+            background: #0b1329;
+            border: 1px solid #7df9ff;
+            width: 90vw;
+            height: 85vh;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(125, 249, 255, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pdf-header {
+            padding: 15px 25px;
+            background: rgba(10, 25, 50, 0.95);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(125, 249, 255, 0.3);
+        }
+
+        .pdf-header h2 {
+            color: #7df9ff;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+
+        .pdf-close-btn {
+            background: transparent;
+            border: none;
+            color: #7df9ff;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .pdf-close-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .pdf-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
+
+        /* 🔘 右下角可伸缩简历容器与悬浮按钮 */
+        .info-container {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .info-toggle-btn {
+            background: rgba(10, 25, 50, 0.9);
+            border: 1px solid #7df9ff;
+            color: #7df9ff;
+            padding: 12px 22px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(125, 249, 255, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-toggle-btn:hover {
+            background: #7df9ff;
+            color: #020817;
+            box-shadow: 0 0 30px #7df9ff;
+            transform: scale(1.05);
+        }
+
+        /* 🖼️ 伸缩面板主体 */
+        .lu-yang-grid {
+            width: 0;
+            max-height: 0;
+            overflow: hidden;
+            background: rgba(10, 18, 35, 0.95);
+            border: 0px solid rgba(125, 249, 255, 0.4);
+            backdrop-filter: blur(18px);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.85);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            margin-bottom: 12px;
+        }
+
+        .info-container.open .lu-yang-grid {
+            width: 820px;
+            max-width: 90vw;
+            max-height: 50vh;
+            padding: 18px;
+            border-width: 1px;
+            overflow-y: auto;
+        }
+
+        .grid-card {
+            background: rgba(20, 30, 50, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px 14px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .grid-card:hover {
+            border-color: #7df9ff;
+            background: rgba(20, 30, 50, 0.95);
+            box-shadow: 0 0 15px rgba(125, 249, 255, 0.3);
+        }
+
+        .grid-card.span-2 {
+            grid-column: span 2;
+        }
+
+        .grid-card h3 {
+            color: #7df9ff;
+            font-size: 10.5px;
+            margin-bottom: 6px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .grid-card p, .grid-card ul, .grid-card div {
+            font-size: 11px;
+            color: #cbd5e1;
+            line-height: 1.5;
+            list-style: none;
+        }
+
+        /* 滚动条美化 */
+        .lu-yang-grid::-webkit-scrollbar {
+            width: 3px;
+        }
+        .lu-yang-grid::-webkit-scrollbar-thumb {
+            background: rgba(125, 249, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        /* 🖱️ 滚动提示 */
+        .scroll-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            z-index: 900;
+            pointer-events: none;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);}
+            40% {transform: translateX(-50%) translateY(-6px);}
+            60% {transform: translateX(-50%) translateY(-3px);}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 💦 水波纹与鱼群物理动画画布层 -->
+    <canvas id="ripple-canvas"></canvas>
+
+    <!-- 左上角悬浮作品菜单（已去掉括号 PDF） -->
+    <div class="floating-menu">
+        <div class="menu-title">⚡ MOSTRA / OPERE</div>
+        <div class="menu-items">
+            <button class="menu-btn" onclick="scrollToWorks()">✨ Visualizza Opere</button>
+            <button class="menu-btn" onclick="openPdfModal()">📂 Presentazione delle opere</button>
+        </div>
+    </div>
+
+    <!-- 🌊 纵向长图背景与作品交互区 -->
+    <div class="long-image-container">
+        <img src="bg.png" alt="Deep Sea Background">
+        
+        <!-- 🎯 作品面板 -->
+        <div class="works-showcase" id="worksSection">
+            
+            <!-- 第一个作品：MOMO -->
+            <a href="https://youtu.be/KqG3gxGrEC4" target="_blank" class="work-card">
+                <div class="work-img-box">
+                    <img src="momo_cover.png" alt="MOMO" onerror="this.style.display='none'; this.parentElement.innerText='[ Clicca per guardare il video MOMO ]'">
+                </div>
+                <div class="work-info">
+                    <h3>▶ MOMO</h3>
+                    <p>Opera video. Clicca per guardare il video completo su YouTube.</p>
+                </div>
+            </a>
+
+            <!-- 第二个作品：Il sole sorge di nuovo -->
+            <a href="https://guoqianyi481-hue.github.io/Il-sole-sorge-di-nuovo.github.io/" target="_blank" class="work-card">
+                <div class="work-img-box">
+                    <img src="game_cover.png" alt="Il sole sorge di nuovo" onerror="this.style.display='none'; this.parentElement.innerText='[ Clicca per giocare ]'">
+                </div>
+                <div class="work-info">
+                    <h3>🕹 Il sole sorge di nuovo</h3>
+                    <p>Videogioco web interattivo. Clicca per giocare online.</p>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <div class="scroll-hint">↓ Scorri verso il basso per esplorare ↓</div>
+
+    <!-- 📄 PDF 作品介绍预览弹窗 -->
+    <div class="pdf-modal" id="pdfModal">
+        <div class="pdf-modal-content">
+            <div class="pdf-header">
+                <h2>GUO QIANYI — Presentazione delle Opere</h2>
+                <button class="pdf-close-btn" onclick="closePdfModal()">&times;</button>
+            </div>
+            <!-- 嵌入同目录下的 portfolio.pdf 文件 -->
+            <iframe src="portfolio.pdf" class="pdf-iframe"></iframe>
+        </div>
+    </div>
+
+    <!-- 🖼️ 右下角可伸缩信息收纳容器 -->
+    <div class="info-container" id="infoContainer">
+        <div class="lu-yang-grid">
+            <div class="grid-card">
+                <h3>ABOUT / CHI SONO</h3>
+                <p><strong>GUO QIANYI</strong> (2002, Yangzhou)<br>Luogo di nascita: Yangzhou, Cina<br>Data di nascita: 2002</p>
+            </div>
+            <div class="grid-card">
+                <h3>CV / ISTRUZIONE</h3>
+                <p><strong>2023.9 - 2025.6</strong><br>Communication University of China, Nanjing<br>Corso di laurea in Animazione<br><br><strong>2020.10 - 2023.6</strong><br>Nanjing Vocational Institute of Railway Technology<br>Progettazione Artistica per l’Ambiente</p>
+            </div>
+            <div class="grid-card">
+                <h3>COMPETENZE / SOFTWARE</h3>
+                <p><strong>3D e Motore virtuale:</strong> Blender, Nomad Sculpt, Unity<br><strong>Video e Post-produzione:</strong> AE, PR, CapCut<br><strong>Grafica:</strong> Photoshop, Procreate</p>
+            </div>
+            <div class="grid-card span-2">
+                <h3>ARTIST STATEMENT / DICHIARAZIONE D'ARTISTA</h3>
+                <p>Il mio lavoro esplora l'influenza della cultura Internet e dei media digitali sulla cognizione individuale, concentrandosi su temi come l'identità digitale e il postumano nel contesto della cultura post-internet. I media di creazione includono l'arte video, l'arte IA e il web design interattivo, tra gli altri media digitali.</p>
+            </div>
+            <div class="grid-card">
+                <h3>CONTATTI</h3>
+                <p>📧 <strong>guoqianyi481@gmail.com</strong></p>
+            </div>
+        </div>
+        <button class="info-toggle-btn" onclick="toggleInfoPanel()">
+            <span id="toggleIcon">ℹ</span> <span id="toggleText">Info / Profilo</span>
+        </button>
+    </div>
+
+    <script>
+        function scrollToWorks() {
+            document.getElementById('worksSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // PDF 弹窗控制函数
+        function openPdfModal() {
+            document.getElementById('pdfModal').style.display = 'flex';
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+        }
+
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('pdfModal');
+            if (e.target === modal) {
+                closePdfModal();
+            }
+        });
+
+        function toggleInfoPanel() {
+            const container = document.getElementById('infoContainer');
+            const toggleText = document.getElementById('toggleText');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            container.classList.toggle('open');
+            
+            if (container.classList.contains('open')) {
+                toggleText.innerText = "Chiudi Info";
+                toggleIcon.innerText = "✕";
+            } else {
+                toggleText.innerText = "Info / Profilo";
+                toggleIcon.innerText = "ℹ";
+            }
+        }
+
+        /* 💦 鱼群游动与超大水波纹物理仿真引擎 */
+        const canvas = document.getElementById('ripple-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let fishes = [];
+        const fishCount = 12;
+        for (let i = 0; i < fishCount; i++) {
+            fishes.push({
+                x: Math.random() * canvas.width,
+                y: canvas.height * 0.6 + Math.random() * (canvas.height * 0.4),
+                length: Math.random() * 25 + 20,
+                speed: Math.random() * 0.8 + 0.4,
+                angle: Math.random() * Math.PI * 2,
+                tailWiggleSpeed: Math.random() * 0.1 + 0.05,
+                tailWiggleDist: Math.random() * 6 + 4,
+                color: Math.random() > 0.3 ? 'rgba(125, 249, 255, 0.6)' : 'rgba(100, 180, 255, 0.5)'
+            });
+        }
+
+        let ripples = [];
+        let lastX = 0, lastY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            let dx = e.clientX - lastX;
+            let dy = e.clientY - lastY;
+            let speed = Math.sqrt(dx * dx + dy * dy);
+            
+            if (speed > 3) {
+                ripples.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    radius: 8,
+                    maxRadius: 80,
+                    alpha: 0.45,
+                    speed: 2.2,
+                    ringCount: 2
+                });
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.clientX > window.innerWidth - 850 && e.clientY > window.innerHeight - 520) return;
+            if (e.clientX < 220 && e.clientY < 180) return;
+
+            ripples.push({
+                x: e.clientX,
+                y: e.clientY,
+                radius: 12,
+                maxRadius: 280,
+                alpha: 0.9,
+                speed: 4.0,
+                ringCount: 3
+            });
+        });
+
+        function animateScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            fishes.forEach(fish => {
+                fish.x += fish.speed;
+                fish.y += Math.sin(fish.x * 0.01) * 0.4;
+
+                if (fish.x > canvas.width + 50) {
+                    fish.x = -50;
+                    fish.y = canvas.height * 0.5 + Math.random() * (canvas.height * 0.4);
+                }
+
+                ctx.save();
+                ctx.translate(fish.x, fish.y);
+                
+                ctx.beginPath();
+                ctx.fillStyle = fish.color;
+                ctx.shadowColor = '#7df9ff';
+                ctx.shadowBlur = 10;
+                ctx.ellipse(0, 0, fish.length, fish.length * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                let tailX = -fish.length;
+                let tailY = Math.sin(Date.now() * fish.tailWiggleSpeed) * fish.tailWiggleDist;
+                ctx.beginPath();
+                ctx.moveTo(tailX + 5, 0);
+                ctx.lineTo(tailX - 12, tailY);
+                ctx.lineTo(tailX - 8, 0);
+                ctx.fillStyle = fish.color;
+                ctx.fill();
+
+                ctx.restore();
+            });
+
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                let r = ripples[i];
+                r.radius += r.speed;
+                r.alpha -= 0.012;
+
+                if (r.alpha <= 0 || r.radius >= r.maxRadius) {
+                    ripples.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                for (let j = 0; j < r.ringCount; j++) {
+                    let currentRadius = r.radius - (j * 18);
+                    if (currentRadius > 0) {
+                        let currentAlpha = r.alpha * (1 - j * 0.25);
+                        if (currentAlpha < 0) currentAlpha = 0;
+
+                        ctx.beginPath();
+                        ctx.arc(r.x, r.y, currentRadius, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(135, 206, 250, ${currentAlpha})`;
+                        ctx.lineWidth = 2.2 - (j * 0.4);
+                        ctx.shadowColor = '#00d8ff';
+                        ctx.shadowBlur = 12;
+                        ctx.stroke();
+                    }
+                }
+                ctx.restore();
+            }
+
+            requestAnimationFrame(animateScene);
+        }
+        animateScene();
+    </script>
+</body>
+</html>
